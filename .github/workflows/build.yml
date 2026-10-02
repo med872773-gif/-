@@ -18,13 +18,10 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Set up Android SDK
-      uses: android-actions/setup-android@v3
-
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
 
     - name: Build APK with Cordova
       run: |
@@ -34,7 +31,7 @@ jobs:
         rm -rf www/*
         cp -r ../* www/ 2>/dev/null || true
         rm -rf www/myapp www/.github
-        cordova platform add android@12.0.0
+        cordova platform add android
         cordova build android --debug
 
     - name: Upload APK
@@ -42,4 +39,3 @@ jobs:
       with:
         name: Muslim-App-APK
         path: myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-
