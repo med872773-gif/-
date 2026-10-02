@@ -33,16 +33,31 @@ jobs:
           cp -r ../* www/ 2>/dev/null || true
           rm -rf www/myapp www/.github
           
-          # ربط صورة الأيقونة تلقائياً
+          # إضافة المنصة أولاً
+          cordova platform add android
+          
+          # نسخ الصورة لجميع مجلدات الأيقونات في الأندرويد (تضمن ظهورها على كل الهواتف)
           if [ -f "../icon.png" ]; then
             cp ../icon.png www/icon.png
             sed -i '/<\/widget>/i \    <icon src="www/icon.png" />' config.xml
-          elif [ -f "../icon.jpg" ]; then
-            cp ../icon.jpg www/icon.jpg
-            sed -i '/<\/widget>/i \    <icon src="www/icon.jpg" />' config.xml
+            
+            # نسخ الصورة لمجلدات mipmap الرسمية في الأندرويد
+            RES_PATH="platforms/android/app/src/main/res"
+            mkdir -p $RES_PATH/mipmap-ldpi $RES_PATH/mipmap-mdpi $RES_PATH/mipmap-hdpi $RES_PATH/mipmap-xhdpi $RES_PATH/mipmap-xxhdpi $RES_PATH/mipmap-xxxhdpi
+            cp ../icon.png $RES_PATH/mipmap-ldpi/ic_launcher.png
+            cp ../icon.png $RES_PATH/mipmap-mdpi/ic_launcher.png
+            cp ../icon.png $RES_PATH/mipmap-hdpi/ic_launcher.png
+            cp ../icon.png $RES_PATH/mipmap-xhdpi/ic_launcher.png
+            cp ../icon.png $RES_PATH/mipmap-xxhdpi/ic_launcher.png
+            cp ../icon.png $RES_PATH/mipmap-xxxhdpi/ic_launcher.png
+            cp ../icon.png $RES_PATH/mipmap-ldpi/ic_launcher_foreground.png
+            cp ../icon.png $RES_PATH/mipmap-mdpi/ic_launcher_foreground.png
+            cp ../icon.png $RES_PATH/mipmap-hdpi/ic_launcher_foreground.png
+            cp ../icon.png $RES_PATH/mipmap-xhdpi/ic_launcher_foreground.png
+            cp ../icon.png $RES_PATH/mipmap-xxhdpi/ic_launcher_foreground.png
+            cp ../icon.png $RES_PATH/mipmap-xxxhdpi/ic_launcher_foreground.png
           fi
 
-          cordova platform add android
           cordova build android --debug
 
       - name: Upload APK
