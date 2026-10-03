@@ -27,37 +27,52 @@ jobs:
       - name: Build APK with Cordova
         run: |
           npm install -g cordova
+          
+          # إنشاء مشروع Cordova
           cordova create myapp com.muslim.app "رفيق المسلم"
           cd myapp
+          
+          # نسخ ملفات الموقع إلى www
           rm -rf www/*
           cp -r ../* www/ 2>/dev/null || true
           rm -rf www/myapp www/.github
-          
-          # إضافة المنصة أولاً
-          cordova platform add android
-          
-          # نسخ الصورة لجميع مجلدات الأيقونات في الأندرويد (تضمن ظهورها على كل الهواتف)
+
+          # كتابة ملف config.xml متوافق مع نظام أندرويد الحديث للأيقونات
+          cat << 'EOF' > config.xml
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget id="com.muslim.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+              <name>رفيق المسلم</name>
+              <description>تطبيق رفيق المسلم</description>
+              <author>Muslim App</author>
+              <content src="index.html" />
+              <icon src="www/icon.png" />
+              <platform name="android">
+                  <icon src="www/icon.png" density="ldpi" />
+                  <icon src="www/icon.png" density="mdpi" />
+                  <icon src="www/icon.png" density="hdpi" />
+                  <icon src="www/icon.png" density="xhdpi" />
+                  <icon src="www/icon.png" density="xxhdpi" />
+                  <icon src="www/icon.png" density="xxxhdpi" />
+              </platform>
+          </widget>
+          EOF
+
+          # نقل الصورة إلى www
           if [ -f "../icon.png" ]; then
             cp ../icon.png www/icon.png
-            sed -i '/<\/widget>/i \    <icon src="www/icon.png" />' config.xml
-            
-            # نسخ الصورة لمجلدات mipmap الرسمية في الأندرويد
-            RES_PATH="platforms/android/app/src/main/res"
-            mkdir -p $RES_PATH/mipmap-ldpi $RES_PATH/mipmap-mdpi $RES_PATH/mipmap-hdpi $RES_PATH/mipmap-xhdpi $RES_PATH/mipmap-xxhdpi $RES_PATH/mipmap-xxxhdpi
-            cp ../icon.png $RES_PATH/mipmap-ldpi/ic_launcher.png
-            cp ../icon.png $RES_PATH/mipmap-mdpi/ic_launcher.png
-            cp ../icon.png $RES_PATH/mipmap-hdpi/ic_launcher.png
-            cp ../icon.png $RES_PATH/mipmap-xhdpi/ic_launcher.png
-            cp ../icon.png $RES_PATH/mipmap-xxhdpi/ic_launcher.png
-            cp ../icon.png $RES_PATH/mipmap-xxxhdpi/ic_launcher.png
-            cp ../icon.png $RES_PATH/mipmap-ldpi/ic_launcher_foreground.png
-            cp ../icon.png $RES_PATH/mipmap-mdpi/ic_launcher_foreground.png
-            cp ../icon.png $RES_PATH/mipmap-hdpi/ic_launcher_foreground.png
-            cp ../icon.png $RES_PATH/mipmap-xhdpi/ic_launcher_foreground.png
-            cp ../icon.png $RES_PATH/mipmap-xxhdpi/ic_launcher_foreground.png
-            cp ../icon.png $RES_PATH/mipmap-xxxhdpi/ic_launcher_foreground.png
           fi
 
+          # إضافة منصة الأندرويد
+          cordova platform add android
+
+          # استبدال إجباري لجميع أيقونات النظام التكيفية (Adaptive Icons)
+          RES_DIR="platforms/android/app/src/main/res"
+          if [ -f "www/icon.png" ]; then
+            find $RES_DIR -name "ic_launcher*.png" -exec cp www/icon.png {} \;
+            find $RES_DIR -name "ic_launcher*.xml" -delete 2>/dev/null || true
+          fi
+
+          # بناء ملف APK
           cordova build android --debug
 
       - name: Upload APK
