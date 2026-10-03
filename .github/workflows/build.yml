@@ -27,31 +27,54 @@ jobs:
       - name: Build APK with Cordova
         run: |
           npm install -g cordova
+          
+          # 1. إنشاء مشروع Cordova جديد
           cordova create myapp com.muslim.app "رفيق المسلم"
           cd myapp
           
-          # نسخ ملفات المشروع إلى مجلد www
+          # 2. تنظيف مجلد www ونسخ كل ملفات المستودع إليه
           rm -rf www/*
           cp -r ../* www/ 2>/dev/null || true
           rm -rf www/myapp www/.github
 
-          # تجهيز الأيقونة إن وجدت
-          if [ -f "../icon.png" ]; then
-            cp ../icon.png www/icon.png
-            sed -i '/<\/widget>/i \    <icon src="www/icon.png" />' config.xml
+          # 3. التأكد من وجود ملف index.html
+          if [ ! -f "www/index.html" ]; then
+            find www/ -iname "index.html" -exec cp {} www/index.html \;
           fi
 
-          # إضافة منصة الأندرويد
+          # 4. تجهيز الصورة للأيقونة
+          if [ -f "../icon.png" ]; then
+            cp ../icon.png www/icon.png
+          fi
+
+          # 5. إنشاء ملف الإعدادات config.xml
+          cat << 'EOF' > config.xml
+          <?xml version='1.0' encoding='utf-8'?>
+          <widget id="com.muslim.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+              <name>رفيق المسلم</name>
+              <description>تطبيق رفيق المسلم</description>
+              <author email="dev@example.com" href="http://cordova.io">Muslim App Team</author>
+              <content src="index.html" />
+              <allow-intent href="http://*/*" />
+              <allow-intent href="https://*/*" />
+              <icon src="www/icon.png" />
+              <preference name="Orientation" value="default" />
+          </widget>
+          EOF
+
+          # 6. إضافة منصة أندرويد
           cordova platform add android
 
-          # استبدال إجباري لأيقونات الأندرويد الافتراضية بالصورة الخاصة بك
-          if [ -f "www/icon.png" ]; then
-            RES_DIR="platforms/android/app/src/main/res"
-            find $RES_DIR -name "ic_launcher*.png" -exec cp www/icon.png {} \;
+          # 7. استبدال الأيقونات لضمان ظهور الشعار
+          RES_DIR="platforms/android/app/src/main/res"
+          if [ -s "www/icon.png" ]; then
+            find $RES_DIR -type d -name "mipmap*" -exec cp www/icon.png {}/ic_launcher.png \; 2>/dev/null || true
+            find $RES_DIR -type d -name "mipmap*" -exec cp www/icon.png {}/ic_launcher_round.png \; 2>/dev/null || true
+            find $RES_DIR -type d -name "mipmap*" -exec cp www/icon.png {}/ic_launcher_foreground.png \; 2>/dev/null || true
             find $RES_DIR -name "ic_launcher*.xml" -delete 2>/dev/null || true
           fi
 
-          # بناء التطبيق
+          # 8. بناء التطبيق
           cordova build android --debug
 
       - name: Upload APK
