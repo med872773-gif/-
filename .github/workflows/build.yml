@@ -27,52 +27,31 @@ jobs:
       - name: Build APK with Cordova
         run: |
           npm install -g cordova
-          
-          # إنشاء مشروع Cordova
           cordova create myapp com.muslim.app "رفيق المسلم"
           cd myapp
           
-          # نسخ ملفات الموقع إلى www
+          # نسخ ملفات المشروع إلى مجلد www
           rm -rf www/*
           cp -r ../* www/ 2>/dev/null || true
           rm -rf www/myapp www/.github
 
-          # كتابة ملف config.xml متوافق مع نظام أندرويد الحديث للأيقونات
-          cat << 'EOF' > config.xml
-          <?xml version='1.0' encoding='utf-8'?>
-          <widget id="com.muslim.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-              <name>رفيق المسلم</name>
-              <description>تطبيق رفيق المسلم</description>
-              <author>Muslim App</author>
-              <content src="index.html" />
-              <icon src="www/icon.png" />
-              <platform name="android">
-                  <icon src="www/icon.png" density="ldpi" />
-                  <icon src="www/icon.png" density="mdpi" />
-                  <icon src="www/icon.png" density="hdpi" />
-                  <icon src="www/icon.png" density="xhdpi" />
-                  <icon src="www/icon.png" density="xxhdpi" />
-                  <icon src="www/icon.png" density="xxxhdpi" />
-              </platform>
-          </widget>
-          EOF
-
-          # نقل الصورة إلى www
+          # تجهيز الأيقونة إن وجدت
           if [ -f "../icon.png" ]; then
             cp ../icon.png www/icon.png
+            sed -i '/<\/widget>/i \    <icon src="www/icon.png" />' config.xml
           fi
 
           # إضافة منصة الأندرويد
           cordova platform add android
 
-          # استبدال إجباري لجميع أيقونات النظام التكيفية (Adaptive Icons)
-          RES_DIR="platforms/android/app/src/main/res"
+          # استبدال إجباري لأيقونات الأندرويد الافتراضية بالصورة الخاصة بك
           if [ -f "www/icon.png" ]; then
+            RES_DIR="platforms/android/app/src/main/res"
             find $RES_DIR -name "ic_launcher*.png" -exec cp www/icon.png {} \;
             find $RES_DIR -name "ic_launcher*.xml" -delete 2>/dev/null || true
           fi
 
-          # بناء ملف APK
+          # بناء التطبيق
           cordova build android --debug
 
       - name: Upload APK
